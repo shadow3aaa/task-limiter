@@ -1,3 +1,5 @@
-pub fn process(apps: (String, String)) {
+use crate::Config;
+
+pub fn process(apps: Config) {
     todo!()
 }
