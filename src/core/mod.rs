@@ -100,7 +100,6 @@ pub fn process(mut conf: InfoSync<Config>) {
         limiters.par_extend(new_limiters);
 
         // 用inotify堵塞循环直到更新
-        misc::inotify_block([BG_CTL, BG_SET])
-            .expect("Failed to block by inotify");
+        misc::inotify_block([BG_CTL, BG_SET]).expect("Failed to block by inotify");
     }
 }
