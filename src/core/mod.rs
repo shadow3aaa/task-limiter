@@ -107,7 +107,7 @@ pub fn process(mut conf: InfoSync<Config>) {
         limiters.par_extend(new_limiters);
         
         println!("limiter count: {}", limiters.len());
-        limiters.par_iter().for_each(|lim| println!("app: {}, ", read_comm(lim.pid().as_u32()).unwrap()));
+        // limiters.par_iter().for_each(|lim| println!("app: {}, ", read_comm(lim.pid().as_u32()).unwrap()));
         
         // 用inotify堵塞循环直到更新
         misc::inotify_block([BG_CTL, BG_SET]).expect("Failed to block by inotify");
