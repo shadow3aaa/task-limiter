@@ -9,10 +9,11 @@ edition = "2021"
 lto = "fat"
 codegen-units = 1
 opt-level = 3
+panic = 'abort'
 strip = true
 
 [dependencies]
-cpulimiter = { path = "./CpuLimit/cpulimiter" }
+cpulimiter = { git = "https://github.com/shadow3aaa/CpuLimit.git" }
 toml = "0.7.4"
 rayon = "1.7.0"
 procfs = "0.15.1"
