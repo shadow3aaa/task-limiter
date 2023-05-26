@@ -10,6 +10,6 @@ where
         inotify.add_watch(p, WatchMask::MODIFY).unwrap();
     });
 
-    inotify.read_events_blocking(&mut [])?;
+    let _ = inotify.read_events_blocking(&mut []);
     Ok(())
 }
