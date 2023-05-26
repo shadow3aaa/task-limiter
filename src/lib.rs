@@ -3,7 +3,7 @@ pub mod core;
 pub mod info_sync;
 pub mod misc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Config {
     pub white_list: Vec<String>,
     pub msg_list: Vec<String>,

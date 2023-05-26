@@ -27,6 +27,7 @@ pub fn process(mut conf: InfoSync<Config>) {
     loop {
         // 读取pid，并且过滤
         let pids = read_bg_pids();
+        println!("pids_ori: {}", pids.len());
 
         let conf = match conf.get() {
             Some(o) => o,
@@ -58,6 +59,7 @@ pub fn process(mut conf: InfoSync<Config>) {
                 }
             })
             .collect::<PidSet>();
+        println!("pids after filter: {:?}", &pids);
 
         // 首先drop不再需要的
         // CpuLimiter crate原版没有自定义drop行为
@@ -66,39 +68,47 @@ pub fn process(mut conf: InfoSync<Config>) {
         limiters = limiters
             .into_par_iter()
             .filter(|limiter| {
-                if !limiter.alive() {
+                if !limiter.alive() || !limiter.pid().alive() {
+                    println!("limiter/process dead!");
                     false
                 } else {
                     let lim_pid = limiter.pid().as_u32();
-                    pids.par_iter().any(|pid| lim_pid == pid.as_u32())
+                    pids.is_empty() || pids.par_iter().any(|pid| lim_pid == pid.as_u32())
                 }
             })
             .collect();
+        println!("limiters count: {}", limiters.len());
 
         // Pidset中重过滤掉不需要动的那些
         let pids = pids
             .into_par_iter()
             .filter(|pid| {
-                limiters
+                limiters.is_empty() || !limiters
                     .par_iter()
-                    .any(|lim| pid.as_u32() != lim.pid().as_u32())
+                    .any(|lim| pid.as_u32() == lim.pid().as_u32())
             })
             .collect::<PidSet>();
+        println!("pids after filter twice: {:?}", &pids);
 
         // 从剩下的PidSet创建新的CpuLimit
         let new_limiters = pids
             .into_par_iter()
             .filter_map(|pid| {
-                let limiter = CpuLimit::new(Pid::from(pid.as_u32()), LIMIT_PERCENTAGE).ok()?;
+                let limiter = CpuLimit::new_with_children(Pid::from(pid.as_u32()), LIMIT_PERCENTAGE).ok()?;
                 if let PidType::MsgApp(_p) = pid {
+                    let _ = limiter.set_slice(Duration::from_secs(100));
                     Some(limiter.with_timer_suspend(MSG_TIMER, MSG_TIME_LEN))
                 } else {
+                    let _ = limiter.set_slice(Duration::from_secs(150));
                     Some(limiter)
                 }
             })
             .collect::<Limiters>();
         limiters.par_extend(new_limiters);
-
+        
+        println!("limiter count: {}", limiters.len());
+        limiters.par_iter().for_each(|lim| println!("app: {}, ", read_comm(lim.pid().as_u32()).unwrap()));
+        
         // 用inotify堵塞循环直到更新
         misc::inotify_block([BG_CTL, BG_SET]).expect("Failed to block by inotify");
     }
