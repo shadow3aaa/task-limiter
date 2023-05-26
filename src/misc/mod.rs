@@ -3,11 +3,13 @@ mod inotify_utils;
 pub use inotify_utils::*;
 
 // 把自身线程绑定到小核
+#[allow(dead_code)]
 pub fn set_self_sched() {
     let self_pid = &std::process::id().to_string();
     write_file(self_pid, "/dev/cpuset/background/tasks");
 }
 
+#[allow(dead_code)]
 pub fn exec_cmd(command: &str, args: &[&str]) -> Result<String, i32> {
     use std::process::Command;
     let output = Command::new(command).args(args).output();

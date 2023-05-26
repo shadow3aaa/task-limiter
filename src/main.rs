@@ -1,10 +1,8 @@
-use std::env::args;
-use std::fs;
-use std::process::exit;
-use task_limiter::{config, core, misc::set_self_sched};
+use std::{env::args, fs, process::exit};
+use task_limiter::{config, core, info_sync::*, misc};
 
 fn main() {
-    set_self_sched();
+    // misc::set_self_sched();
     let path = match args().nth(1) {
         Some(o) => o,
         None => {
@@ -12,7 +10,12 @@ fn main() {
             exit(2);
         }
     };
-    let conf = fs::read_to_string(path).expect("Parse config failed");
-    let apps = config::get_config(conf);
-    core::process(apps);
+    let conf_raw = fs::read_to_string(&path).expect("Parse config failed");
+    let conf = InfoSync::new_blocker(
+        move || config::get_config(&conf_raw),
+        move || {
+            let _ = misc::inotify_block([&path]);
+        },
+    );
+    core::process(conf);
 }

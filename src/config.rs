@@ -2,7 +2,7 @@ use crate::Config;
 use toml::Value;
 
 // 解析配置，返回应用列表
-pub fn get_config(config: String) -> Config {
+pub fn get_config(config: &str) -> Config {
     let config = config.parse::<Value>().expect("Failed to parse TOML");
     let white_list = parse_toml(&config, "White_List_Apps");
     let msg_list = parse_toml(&config, "Msg_Apps");
@@ -41,6 +41,6 @@ fn test_config() {
         "baidu.com"
     ]
     "#;
-    let config = get_config(config.to_string());
+    let config = get_config(config);
     println!("{:?}", config);
 }
