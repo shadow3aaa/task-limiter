@@ -1,5 +1,3 @@
-[submodule "CpuLimit"]
-	path = CpuLimit
-	url = https://github.com/shadow3aaa/CpuLimit.git
 [submodule "Cpulimit"]
-	url = https://github.com/shadow3aaa/CpuLimit
+	url = https://github.com/shadow3aaa/CpuLimit.git
+	path = Cpulimit
