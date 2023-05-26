@@ -6,5 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cpulimiter = "0.2.0"
+cpulimiter = { path = "./CpuLimit/cpulimiter" }
 toml = "0.7.4"
+rayon = "1.7.0"
+procfs = "0.15.1"
+inotify = "0.10.0"

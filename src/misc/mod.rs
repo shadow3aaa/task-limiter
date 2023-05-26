@@ -1,5 +1,6 @@
-pub mod android_utils;
-pub use android_utils::*;
+mod inotify_utils;
+
+pub use inotify_utils::*;
 
 // 把自身线程绑定到小核
 pub fn set_self_sched() {

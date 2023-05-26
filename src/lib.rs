@@ -1,5 +1,6 @@
 pub mod config;
 pub mod core;
+pub mod info_sync;
 pub mod misc;
 
 #[derive(Debug)]

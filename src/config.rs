@@ -17,7 +17,7 @@ pub fn get_config(config: String) -> Config {
 pub fn parse_toml(config: &Value, flag: &'static str) -> Vec<String> {
     config[flag]["list"]
         .as_array()
-        .expect(&format!("Err : The {} is not parsed", flag))
+        .unwrap_or_else(|| panic!("Err : The {} is not parsed", flag))
         .iter()
         .map(|v| v.as_str().unwrap().to_string())
         .collect()
@@ -28,8 +28,7 @@ fn test_config() {
     // 测试配置是乱写的
     let config = r#"[White_List_Apps]
     list = [
-        "apple",
-        "banana"
+        "good"
     ]
     [Msg_Apps]
     list = [
