@@ -14,7 +14,7 @@ fn main() {
     let conf = InfoSync::new_blocker(
         move || config::get_config(&conf_raw),
         move || {
-            let _ = misc::inotify_block([&path]);
+            misc::inotify_block([&path]).expect("Failed to block by inotify");;
         },
     );
     core::process(conf);
