@@ -1,7 +1,8 @@
 use std::{env::args, fs, process::exit};
 use task_limiter::{config, core, info_sync::*, misc};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // misc::set_self_sched();
     let path = match args().nth(1) {
         Some(o) => o,
@@ -17,5 +18,5 @@ fn main() {
             misc::inotify_block([&path]).expect("Failed to block by inotify");
         },
     );
-    core::process(conf);
+    core::process(conf).await;
 }

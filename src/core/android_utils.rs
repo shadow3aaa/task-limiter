@@ -1,4 +1,6 @@
+#[allow(unused_imports)]
 use super::{BG_CTL, BG_SET};
+
 use crate::misc::exec_cmd;
 
 use rayon::prelude::*;
@@ -37,7 +39,7 @@ pub fn get_system_apps() -> Vec<String> {
 
 pub fn read_bg_pids() -> HashSet<u32> {
     let mut bg_pids: HashSet<u32> = HashSet::new();
-    [BG_SET, BG_CTL].iter().for_each(|procs| {
+    [BG_SET].iter().for_each(|procs| {
         if let Ok(o) = fs::read_to_string(procs) {
             bg_pids.par_extend(o.par_lines().filter_map(|l| l.parse::<u32>().ok()));
         }

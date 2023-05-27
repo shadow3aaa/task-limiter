@@ -16,5 +16,5 @@ strip = true
 cpulimiter = { git = "https://github.com/shadow3aaa/CpuLimit.git" }
 toml = "0.7.4"
 rayon = "1.7.0"
-procfs = "0.15.1"
 inotify = "0.10.0"
+tokio = { version = "1.28.1", features = ["full"] }
