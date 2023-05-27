@@ -1,0 +1,6 @@
+id=task_limiter
+name=Task Limiter
+version=v0.0.1
+versionCode=1
+author=shadow3
+description=一个根据配置和cgroup.procs变化自动限制后台程序占用的限制器程序，配置位于/sdcard/Android/TaskLimiter

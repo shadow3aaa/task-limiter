@@ -1,0 +1,23 @@
+# 使用Inotify检测配置更新，在修改后马上生效
+# 不要删除不需要的表/list，如果没有内容就留空即可
+
+
+# 此列表的应用强制豁免被限制
+[White_List_Apps]
+list = [
+    "hello.litiaotiao.app",
+    "com.omarea.vtools",
+]
+
+# 此列表内的应用会被限制，但是每过一段时间就会解除限制来刷新消息
+[Msg_Apps]
+list = [
+    "com.tencent.mobileqq",
+    "com.tencent.mm",
+]
+
+# 默认只自动限制在background组的第三方应用
+# 这里可以强制限制在backgroud组的任何应用
+[Force_Apps]
+list = [
+]

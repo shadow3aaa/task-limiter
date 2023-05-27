@@ -37,7 +37,7 @@ pub async fn process(mut conf: InfoSync<Config>) {
 async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, third_apps: &mut InfoSync<Vec<String>>) -> Limiters {
 // 读取pid，并且过滤
     let pids = read_bg_pids();
-    println!("pids_ori: {}", pids.len());
+    // println!("pids_ori: {}", pids.len());
 
     let conf = match conf.get() {
         Some(o) => o,
@@ -69,7 +69,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
             }
         })
         .collect::<PidSet>();
-    println!("pids after filter: {:?}", &pids);
+    // println!("pids after filter: {:?}", &pids);
 
     // 首先drop不再需要的
     // CpuLimiter crate原版没有自定义drop行为
@@ -79,7 +79,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
         .into_par_iter()
         .filter(|limiter| {
             if !limiter.alive() || !limiter.pid().alive() {
-                println!("limiter/process dead!");
+                // println!("limiter/process dead!");
                 false
             } else {
                 let lim_pid = limiter.pid().as_u32();
@@ -87,7 +87,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
             }
         })
         .collect();
-    println!("limiters count: {}", limiters.len());
+    // println!("limiters count: {}", limiters.len());
 
     // Pidset中重过滤掉不需要动的那些
     let pids = pids
@@ -98,7 +98,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
                 .any(|lim| pid.as_u32() == lim.pid().as_u32())
         })
         .collect::<PidSet>();
-    println!("pids after filter twice: {:?}", &pids);
+    // println!("pids after filter twice: {:?}", &pids);
 
     // 从剩下的PidSet创建新的CpuLimit
     let new_limiters = pids
@@ -116,7 +116,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
         .collect::<Limiters>();
     limiters.par_extend(new_limiters);
     
-    println!("limiter count: {}", limiters.len());
-    limiters.par_iter().for_each(|lim| println!("app: {}, ", read_comm(lim.pid().as_u32()).unwrap()));
+    // println!("limiter count: {}", limiters.len());
+    // limiters.par_iter().for_each(|lim| println!("app: {}, ", read_comm(lim.pid().as_u32()).unwrap()));
     limiters
 }
