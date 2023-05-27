@@ -104,7 +104,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
     let new_limiters = pids
         .into_par_iter()
         .filter_map(|pid| {
-            let limiter = CpuLimit::new_with_children(Pid::from(pid.as_u32()), LIMIT_PERCENTAGE).ok()?;
+            let limiter = CpuLimit::new(Pid::from(pid.as_u32()), LIMIT_PERCENTAGE).ok()?;
             if let PidType::MsgApp(_) = pid {
                 let _ = limiter.set_slice(Duration::from_millis(500));
                 Some(limiter.with_timer_suspend(MSG_TIMER, MSG_TIME_LEN))
