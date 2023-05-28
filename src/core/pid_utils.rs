@@ -13,7 +13,7 @@ impl PidType {
     }
 }
 
-pub fn read_comm(pid: u32) -> Option<String> {
+pub fn read_cmdline(pid: u32) -> Option<String> {
     use std::fs;
     let comm = format!("/proc/{}/cmdline", pid);
     let comm = fs::read_to_string(comm).ok()?;

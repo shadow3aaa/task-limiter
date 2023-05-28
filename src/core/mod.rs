@@ -1,7 +1,7 @@
 mod android_utils;
 mod pid_utils;
 
-use crate::{info_sync::*, misc, Config};
+use crate::{info_sync::InfoSync, blocker::Blocker, Config};
 
 use android_utils::*;
 use pid_utils::*;
@@ -10,32 +10,46 @@ use std::collections::HashSet;
 use std::time::Duration;
 
 use cpulimiter::{CpuLimit, Pid};
+use tokio::time::sleep;
 use rayon::prelude::*;
 
 #[allow(dead_code)]
 pub(crate) const BG_CTL: &str = "/dev/cpuctl/background/cgroup.procs";
 #[allow(dead_code)]
 pub(crate) const BG_SET: &str = "/dev/cpuset/background/cgroup.procs";
-const LIMIT_PERCENTAGE: f64 = 3.0;
+const LIMIT_PERCENTAGE: f64 = 0.5;
 const MSG_TIMER: Duration = Duration::from_secs(30);
-const MSG_TIME_LEN: Duration = Duration::from_secs(6);
+const MSG_TIME_LEN: Duration = Duration::from_secs(1);
 
 type Limiters = Vec<CpuLimit>;
 type PidSet = HashSet<PidType>;
 pub async fn process(mut conf: InfoSync<Config>) {
     let mut limiters = Limiters::new();
     let mut third_apps = InfoSync::new_timer(get_third_party_apps, Duration::from_secs(10));
+    let mut blocker_lru = Blocker::new(|| get_top_apps(), Duration::from_millis(100));
 
     loop {
         let do_lim = limiters_process(&mut conf, limiters, &mut third_apps);
+        let blocker = blocker_lru.block_async();
+        /*let inotify_block = misc::inotify_block_async([BG_SET, BG_CTL]);
+        let read_block_set = misc::read_block_async(BG_SET, Duration::from_millis(30));
+        let read_block_ctl = misc::read_block_async(BG_CTL, Duration::from_millis(30));
         // 用inotify堵塞循环直到更新
-        misc::inotify_block([BG_SET]).expect("Failed to block by inotify");
+        */
+        tokio::select! {
+            _ = blocker => (),
+            _ = sleep(Duration::from_secs(10)) => ()
+        }
         limiters = do_lim.await;
     }
 }
 
-async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, third_apps: &mut InfoSync<Vec<String>>) -> Limiters {
-// 读取pid，并且过滤
+async fn limiters_process(
+    conf: &mut InfoSync<Config>,
+    mut limiters: Limiters,
+    third_apps: &mut InfoSync<Vec<String>>,
+) -> Limiters {
+    // 读取pid，并且过滤
     let pids = read_bg_pids();
     // println!("pids_ori: {}", pids.len());
 
@@ -52,7 +66,7 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
     let pids = pids
         .into_par_iter()
         .filter_map(|pid| {
-            let comm = match read_comm(pid) {
+            let comm = match read_cmdline(pid) {
                 Some(o) => o,
                 None => return None,
             };
@@ -83,7 +97,10 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
                 false
             } else {
                 let lim_pid = limiter.pid().as_u32();
-                pids.is_empty() || pids.par_iter().any(|pid| lim_pid == pid.as_u32())
+                !get_top_apps()
+                    .par_iter()
+                    .any(|app| app == &read_cmdline(limiter.pid().as_u32()).unwrap_or_default())
+                    && (pids.is_empty() || pids.par_iter().any(|pid| lim_pid == pid.as_u32()))
             }
         })
         .collect();
@@ -93,9 +110,10 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
     let pids = pids
         .into_par_iter()
         .filter(|pid| {
-            limiters.is_empty() || !limiters
-                .par_iter()
-                .any(|lim| pid.as_u32() == lim.pid().as_u32())
+            limiters.is_empty()
+                || !limiters
+                    .par_iter()
+                    .any(|lim| pid.as_u32() == lim.pid().as_u32())
         })
         .collect::<PidSet>();
     // println!("pids after filter twice: {:?}", &pids);
@@ -106,17 +124,17 @@ async fn limiters_process(conf: &mut InfoSync<Config>, mut limiters: Limiters, t
         .filter_map(|pid| {
             let limiter = CpuLimit::new(Pid::from(pid.as_u32()), LIMIT_PERCENTAGE).ok()?;
             if let PidType::MsgApp(_) = pid {
-                let _ = limiter.set_slice(Duration::from_millis(500));
+                let _ = limiter.set_slice(Duration::from_secs(2));
                 Some(limiter.with_timer_suspend(MSG_TIMER, MSG_TIME_LEN))
             } else {
-                let _ = limiter.set_slice(Duration::from_millis(400));
+                let _ = limiter.set_slice(Duration::from_secs(1));
                 Some(limiter)
             }
         })
         .collect::<Limiters>();
     limiters.par_extend(new_limiters);
-    
+
+    // limiters.par_iter().for_each(|lim| println!("app: {}, ", read_cmdline(lim.pid().as_u32()).unwrap()));
     // println!("limiter count: {}", limiters.len());
-    // limiters.par_iter().for_each(|lim| println!("app: {}, ", read_comm(lim.pid().as_u32()).unwrap()));
     limiters
 }

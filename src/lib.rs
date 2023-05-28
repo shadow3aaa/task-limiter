@@ -1,6 +1,7 @@
 pub mod config;
 pub mod core;
 pub mod info_sync;
+pub mod blocker;
 pub mod misc;
 
 #[derive(Debug, Clone, Default)]
