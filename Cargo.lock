@@ -345,6 +345,7 @@ version = "0.0.1"
 dependencies = [
  "cpulimiter",
  "inotify",
+ "libc",
  "rayon",
  "tokio",
  "toml",

@@ -14,7 +14,8 @@ strip = true
 
 [dependencies]
 cpulimiter = { git = "https://github.com/shadow3aaa/CpuLimit.git" }
-toml = "0.7.4"
+toml = "0.7.3"
 rayon = "1.7.0"
 inotify = "0.10.0"
-tokio = { version = "1.28.2", features = ["full"] }
+tokio = { version = "1.28.0", features = ["full"] }
+libc = "0.2.142"

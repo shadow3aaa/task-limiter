@@ -3,7 +3,7 @@ use task_limiter::{config, core, info_sync::*, misc};
 
 #[tokio::main]
 async fn main() {
-    // misc::set_self_sched();
+    misc::set_self_sched();
     let path = match args().nth(1) {
         Some(o) => o,
         None => {
