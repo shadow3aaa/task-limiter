@@ -66,7 +66,7 @@ impl NapGroup {
         self.group.write().processes.extend(other)
     }
 
-    pub fn wake_them_up<T>(&self, remove: &mut T)
+    pub async fn wake_them_up<T>(&self, remove: &mut T)
     where
         T: IntoIterator<Item = u32> + Iterator,
         <T as Iterator>::Item: PartialEq<u32>,
