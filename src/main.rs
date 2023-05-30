@@ -1,7 +1,6 @@
 use std::env::args;
 use std::fs;
 use std::process::exit;
-use std::sync::Arc;
 
 use task_limiter::{config, core, info_sync::*, misc};
 
@@ -16,7 +15,7 @@ async fn main() {
         }
     };
     let conf_raw = fs::read_to_string(&path).expect("Parse config failed");
-    let mut conf = InfoSync::new_blocker(move || {
+    let conf = InfoSync::new_blocker(move || {
         misc::inotify_block([&path]).expect("Failed to block by inotify");
         config::get_config(&conf_raw)
     });

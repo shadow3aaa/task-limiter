@@ -1,10 +1,12 @@
 use std::sync::Arc;
 use std::{sync::mpsc, thread, time::Duration};
 
+use parking_lot::RwLock;
+
 #[derive(Debug)]
 pub struct InfoSync<T> {
     rx: mpsc::Receiver<T>,
-    data: Option<T>,
+    data: RwLock<Option<T>>,
     thread: thread::JoinHandle<()>,
 }
 
@@ -28,7 +30,7 @@ impl<T: Send + Clone + 'static> InfoSync<T> {
         });
         Self {
             rx,
-            data: None,
+            data: None::<T>.into(),
             thread,
         }
     }
@@ -48,7 +50,7 @@ impl<T: Send + Clone + 'static> InfoSync<T> {
         });
         Self {
             rx,
-            data: None,
+            data: None::<T>.into(),
             thread,
         }
     }
@@ -63,16 +65,17 @@ impl<T: Send + Clone + 'static> InfoSync<T> {
 
     pub fn try_get(&self) -> Option<T> {
         if let Some(o) = self.rx.try_iter().last() {
-            self.data = Some(o);
+            *self.data.write() = Some(o);
         }
-        self.data.clone()
+        self.data.read().clone()
     }
 
     pub fn get(&self) -> Option<T> {
         if let Some(o) = self.try_get() {
             Some(o)
         } else {
-            self.rx.recv().ok()
+            *self.data.write() = self.rx.recv().ok();
+            self.data.read().clone()
         }
     }
 }
