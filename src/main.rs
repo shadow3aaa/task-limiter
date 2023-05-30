@@ -1,4 +1,8 @@
-use std::{env::args, fs, process::exit};
+use std::env::args;
+use std::fs;
+use std::process::exit;
+use std::sync::Arc;
+
 use task_limiter::{config, core, info_sync::*, misc};
 
 #[tokio::main]
@@ -12,11 +16,9 @@ async fn main() {
         }
     };
     let conf_raw = fs::read_to_string(&path).expect("Parse config failed");
-    let mut conf = InfoSync::new_blocker(
-        move || config::get_config(&conf_raw),
-        move || {
-            misc::inotify_block([&path]).expect("Failed to block by inotify");
-        },
-    );
-    core::process(&mut conf).await;
+    let mut conf = InfoSync::new_blocker(move || {
+        misc::inotify_block([&path]).expect("Failed to block by inotify");
+        config::get_config(&conf_raw)
+    });
+    core::process(conf.into()).await;
 }

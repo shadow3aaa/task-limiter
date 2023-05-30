@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::{sync::mpsc, thread, time::Duration};
 
 #[derive(Debug)]
@@ -7,11 +8,14 @@ pub struct InfoSync<T> {
     thread: thread::JoinHandle<()>,
 }
 
+unsafe impl<T> Send for InfoSync<T> {}
+unsafe impl<T> Sync for InfoSync<T> {}
+
 impl<T: Send + Clone + 'static> InfoSync<T> {
     // 通过定时器更新数据
-    pub fn new_timer<F>(fun: F, timer: Duration) -> Self
+    pub fn new_timer<F>(mut fun: F, timer: Duration) -> Self
     where
-        F: Fn() -> T + Send + 'static,
+        F: FnMut() -> T + Send + 'static,
     {
         let (sx, rx) = mpsc::channel();
         let thread = thread::spawn(move || loop {
@@ -30,19 +34,17 @@ impl<T: Send + Clone + 'static> InfoSync<T> {
     }
 
     // 通过一个堵塞函数更新数据，不堵塞就更新
-    pub fn new_blocker<F, B>(fun: F, blocker: B) -> Self
+    pub fn new_blocker<B>(mut blocker: B) -> Self
     where
-        F: Fn() -> T + Send + 'static,
-        B: Fn() + Send + 'static,
+        B: FnMut() -> T + Send + 'static,
     {
         let (sx, rx) = mpsc::channel();
         let thread = thread::spawn(move || loop {
-            let data = fun();
+            let data = blocker();
             // InfoSync drop时send会err，因此不需要自定义Drop自动退出
             if sx.send(data).is_err() {
                 return;
             }
-            blocker();
         });
         Self {
             rx,
@@ -51,14 +53,26 @@ impl<T: Send + Clone + 'static> InfoSync<T> {
         }
     }
 
+    pub fn arc(self) -> Arc<Self> {
+        Arc::new(self)
+    }
+
     pub fn alive(&self) -> bool {
         self.thread.is_finished()
     }
 
-    pub fn get(&mut self) -> Option<T> {
+    pub fn try_get(&self) -> Option<T> {
         if let Some(o) = self.rx.try_iter().last() {
             self.data = Some(o);
         }
         self.data.clone()
+    }
+
+    pub fn get(&self) -> Option<T> {
+        if let Some(o) = self.try_get() {
+            Some(o)
+        } else {
+            self.rx.recv().ok()
+        }
     }
 }

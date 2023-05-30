@@ -9,6 +9,9 @@ pub struct AppProcessGroup {
     pub processes: HashSet<u32>,
 }
 
+unsafe impl Send for AppProcessGroup {}
+unsafe impl Sync for AppProcessGroup {}
+
 impl AppProcessGroup {
     pub fn new() -> Self {
         Self {
