@@ -1,4 +1,4 @@
-use std::{sync::mpsc, thread, time::Duration, error::Error};
+use std::{error::Error, sync::mpsc, thread, time::Duration};
 
 #[derive(Debug)]
 pub struct Blocker<T> {
@@ -38,15 +38,15 @@ impl<T: Send + Clone + std::cmp::PartialEq + 'static> Blocker<T> {
         while self.data == recv_data {
             recv_data = Some(self.rx.recv()?);
         }
-        if let Some(o) = self.rx.try_iter().last(){
+        if let Some(o) = self.rx.try_iter().last() {
             self.data = Some(o);
         } else {
             self.data = recv_data;
         }
         Ok(())
     }
-    
-    pub async fn block_async(&mut self) -> Result<(), Box<dyn Error>>  {
+
+    pub async fn block_async(&mut self) -> Result<(), Box<dyn Error>> {
         self.block()
     }
 }

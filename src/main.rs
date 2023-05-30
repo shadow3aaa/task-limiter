@@ -12,11 +12,11 @@ async fn main() {
         }
     };
     let conf_raw = fs::read_to_string(&path).expect("Parse config failed");
-    let conf = InfoSync::new_blocker(
+    let mut conf = InfoSync::new_blocker(
         move || config::get_config(&conf_raw),
         move || {
             misc::inotify_block([&path]).expect("Failed to block by inotify");
         },
     );
-    core::process(conf).await;
+    core::process(&mut conf).await;
 }
