@@ -4,7 +4,6 @@ use super::killer::{self, Signal};
 
 use rayon::prelude::*;
 
-#[derive(Clone)]
 pub struct AppProcessGroup {
     pub processes: HashSet<u32>,
 }

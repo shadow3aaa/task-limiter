@@ -1,10 +1,11 @@
 mod group;
 mod killer;
 
-use parking_lot::RwLock;
-use rayon::prelude::*;
 use std::collections::HashSet;
 use std::sync::Arc;
+
+use parking_lot::RwLock;
+use rayon::prelude::*;
 use tokio::time::{sleep, Duration};
 
 use group::AppProcessGroup;
@@ -49,35 +50,31 @@ impl NapGroup {
         let group = self.group.clone();
         tokio::spawn(async move {
             loop {
-                let nap_task = awake_for_dur(group.clone(), nap_time, awaken_time);
-                let alive_task = retian_alive(group.clone());
-                nap_task.await;
-                alive_task.await;
+                let nap_task = tokio::spawn(awake_for_dur(group.clone(), nap_time, awaken_time));
+                let alive_task = tokio::spawn(retian_alive(group.clone()));
+                let (_, _) = tokio::join!(nap_task, alive_task);
             }
         });
         self
     }
 
     #[inline(always)]
-    pub fn put_them_nap<T>(&self, other: T)
-    where
-        T: IntoIterator<Item = u32>,
-    {
+    pub fn put_them_nap(&self, other: HashSet<u32>) {
         self.group.write().processes.extend(other)
     }
 
-    pub async fn wake_them_up<T>(&self, remove: &mut T)
-    where
-        T: IntoIterator<Item = u32> + Iterator,
-        <T as Iterator>::Item: PartialEq<u32>,
-    {
+    pub fn wake_them_up(&self, remove: HashSet<u32>) {
         self.group.write().processes.retain(|process| {
-            if remove.any(|pid| pid == *process) {
+            if remove.contains(process) {
                 spawn_killer(*process, Signal::Continue);
                 false
             } else {
                 true
             }
         });
+    }
+
+    pub fn arc(self) -> Arc<Self> {
+        Arc::new(self)
     }
 }

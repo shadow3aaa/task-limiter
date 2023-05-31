@@ -19,5 +19,5 @@ async fn main() {
         misc::inotify_block([&path]).expect("Failed to block by inotify");
         config::get_config(&conf_raw)
     });
-    core::process(conf.into()).await;
+    tokio::spawn(core::process(conf.into())).await.unwrap();
 }
