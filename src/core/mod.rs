@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
 
-const SLEEP_TIME: Duration = Duration::from_millis(300);
+const SLEEP_TIME: Duration = Duration::from_millis(180);
 const SIMP_NAP_TIME: Duration = Duration::from_secs(1);
 const SIMP_AWAKE_TIME: Duration = Duration::from_millis(10);
 const MSG_NAP_TIME: Duration = Duration::from_secs(3);
