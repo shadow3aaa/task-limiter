@@ -20,7 +20,7 @@ impl AppProcessGroup {
 
     fn kill_with(&self, sign: Signal) {
         self.processes.par_iter().for_each(|pid| {
-            killer::spawn_killer(*pid, sign);
+            killer::killer(*pid, sign);
         });
     }
 

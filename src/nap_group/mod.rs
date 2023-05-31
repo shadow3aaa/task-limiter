@@ -66,7 +66,7 @@ impl NapGroup {
     pub fn wake_them_up(&self, remove: HashSet<u32>) {
         self.group.write().processes.retain(|process| {
             if remove.contains(process) {
-                spawn_killer(*process, Signal::Continue);
+                killer(*process, Signal::Continue);
                 false
             } else {
                 true
