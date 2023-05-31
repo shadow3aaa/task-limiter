@@ -1,7 +1,6 @@
 # 使用Inotify检测配置更新，在修改后马上生效
 # 不要删除不需要的表/list，如果没有内容就留空即可
 
-
 # 此列表的应用强制豁免被限制
 [White_List_Apps]
 list = [
@@ -16,8 +15,8 @@ list = [
     "com.tencent.mm",
 ]
 
-# 默认只自动限制在background组的第三方应用
-# 这里可以强制限制在backgroud组的任何应用
+# 默认只自动限制第三方应用
+# 这里可以强制限制任何(包括系统)应用
 [Force_Apps]
 list = [
 ]
