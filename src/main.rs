@@ -49,15 +49,17 @@ async fn main() {
     info!("Successfully readed profile at {}", &path);
     debug!("Config Raw : {}", &conf_raw);
 
+    info!("Creating configuration monitor");
     let conf = InfoSync::new_blocker(move || {
         if misc::inotify_block([&path]).is_err() {
             error!("Failed to block config file by using inotify");
             exit(1)
         }
         info!("Configuration updates, reparsing");
-        config::get_config(&conf_raw)
+        let parsed_conf = config::get_config(&conf_raw);
+        info!("{:#?}", &parsed_conf);
+        parsed_conf
     });
-    info!("Create a configuration monitoring thread");
 
     // 把配置传给执行函数
     debug!("Switch to the process function");

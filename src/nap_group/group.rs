@@ -1,11 +1,13 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
-use super::killer::{self, Signal};
+use super::killer::*;
 
 use rayon::prelude::*;
 
+type PidApp = HashMap<u32, String>;
+
 pub struct AppProcessGroup {
-    pub processes: HashSet<u32>,
+    pub processes: PidApp,
 }
 
 unsafe impl Send for AppProcessGroup {}
@@ -14,13 +16,13 @@ unsafe impl Sync for AppProcessGroup {}
 impl AppProcessGroup {
     pub fn new() -> Self {
         Self {
-            processes: HashSet::new(),
+            processes: HashMap::new(),
         }
     }
 
     fn kill_with(&self, sign: Signal) {
-        self.processes.par_iter().for_each(|pid| {
-            killer::killer(*pid, sign);
+        self.processes.par_iter().for_each(|(pid, app)| {
+            promised_app_killer(*pid, app, sign);
         });
     }
 
@@ -33,10 +35,10 @@ impl AppProcessGroup {
     }
 }
 
-impl From<HashSet<u32>> for AppProcessGroup {
-    fn from(hash_set: HashSet<u32>) -> Self {
+impl From<PidApp> for AppProcessGroup {
+    fn from(hash_map: PidApp) -> Self {
         AppProcessGroup {
-            processes: hash_set,
+            processes: hash_map,
         }
     }
 }

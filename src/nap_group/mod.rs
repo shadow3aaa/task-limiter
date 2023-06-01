@@ -1,7 +1,7 @@
 mod group;
 mod killer;
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use group::AppProcessGroup;
@@ -10,6 +10,8 @@ use killer::*;
 use parking_lot::RwLock;
 use rayon::prelude::*;
 use tokio::time::{sleep, Duration};
+
+type PidApp = HashMap<u32, String>;
 
 pub struct NapGroup {
     group: Arc<RwLock<AppProcessGroup>>,
@@ -34,9 +36,9 @@ async fn retian_alive(group: Arc<RwLock<AppProcessGroup>>) {
             .read()
             .processes
             .par_iter()
-            .filter(|pid| killer(**pid, Signal::Alive))
-            .map(|pid| *pid)
-            .collect::<HashSet<u32>>(),
+            .filter(|(pid, app)| promised_app_killer(**pid, app, Signal::Alive))
+            .map(|(pid, app)| (*pid, app.to_string()))
+            .collect::<PidApp>(),
     );
     *group.write() = new_group;
 }
@@ -61,7 +63,7 @@ impl NapGroup {
     }
 
     #[inline(always)]
-    pub fn put_them_nap(&self, other: HashSet<u32>) {
+    pub fn put_them_nap(&self, other: PidApp) {
         if other.is_empty() {
             return;
         }
@@ -70,13 +72,13 @@ impl NapGroup {
         }
     }
 
-    pub fn wake_them_up(&self, remove: HashSet<u32>) {
+    pub fn wake_them_up(&self, remove: PidApp) {
         if remove.is_empty() {
             return;
         }
-        self.group.write().processes.retain(|process| {
-            if remove.contains(process) {
-                killer(*process, Signal::Continue);
+        self.group.write().processes.retain(|pid, _| {
+            if remove.contains_key(pid) {
+                killer(*pid, Signal::Continue);
                 false
             } else {
                 true

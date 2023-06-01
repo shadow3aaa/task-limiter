@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::process::exit;
 use std::sync::Arc;
 
@@ -29,10 +29,10 @@ impl LruDumper {
         Self { original_dump: lru }
     }
 
-    pub fn need_nap_in(&self, list: &HashSet<String>) -> HashSet<u32> {
+    pub fn need_nap_in(&self, list: &HashSet<String>) -> HashMap<u32, String> {
         if list.is_empty() {
             debug!("Nothing add to nap list");
-            return HashSet::new();
+            return HashMap::default();
         }
         self.original_dump
             .par_lines()
@@ -55,15 +55,15 @@ impl LruDumper {
                     return None;
                 }
                 debug!("Add {}:{} to nap list", &pkg, &pid);
-                Some(pid)
+                Some((pid, pkg.to_string()))
             })
-            .collect::<HashSet<u32>>()
+            .collect::<HashMap<u32, String>>()
     }
 
-    pub fn need_awake_in(&self, list: &HashSet<String>) -> HashSet<u32> {
+    pub fn need_awake_in(&self, list: &HashSet<String>) -> HashMap<u32, String> {
         if list.is_empty() {
             debug!("Nothing to wake up");
-            return HashSet::new();
+            return HashMap::default();
         }
         self.original_dump
             .par_lines()
@@ -86,9 +86,9 @@ impl LruDumper {
                     return None;
                 }
                 debug!("Wake {}:{} up", &pkg, &pid);
-                Some(pid)
+                Some((pid, pkg.to_string()))
             })
-            .collect::<HashSet<u32>>()
+            .collect::<HashMap<u32, String>>()
     }
 
     pub fn arc(self) -> Arc<Self> {
