@@ -36,7 +36,14 @@ async fn retian_alive(group: Arc<RwLock<AppProcessGroup>>) {
             .read()
             .processes
             .par_iter()
-            .filter(|(pid, app)| promised_app_killer(**pid, app, Signal::Alive))
+            .filter(|(pid, app)| {
+                if !promised_app_killer(**pid, app, Signal::Alive) {
+                    killer(**pid, Signal::Continue);
+                    false
+                } else {
+                    true
+                }
+            })
             .map(|(pid, app)| (*pid, app.to_string()))
             .collect::<PidApp>(),
     );
