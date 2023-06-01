@@ -8,7 +8,6 @@ function pred() {
 cargo build $TAGS --target=aarch64-linux-android
 if [[ ! $? -eq 0 ]]; then
 	pred "Help: Try use rustup target add aarch64-linux-android"
-
 else
     exit 0
 fi
