@@ -1,4 +1,7 @@
-use std::{error::Error, sync::mpsc, thread, time::Duration};
+use std::error::Error;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Debug)]
 pub struct Blocker<T> {

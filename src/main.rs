@@ -3,7 +3,10 @@ use std::fs;
 use std::io::Write;
 use std::process::exit;
 
-use task_limiter::{config, core, info_sync::*, misc};
+use task_limiter::config;
+use task_limiter::core;
+use task_limiter::info_sync::*;
+use task_limiter::misc;
 
 use chrono::prelude::*;
 use log::LevelFilter;
@@ -33,7 +36,7 @@ async fn main() {
             exit(2);
         }
     };
-    info!("Try read Profile at {}", &path);
+    info!("Try read profile at {}", &path);
 
     // 读取 & 解析配置
     let conf_raw = match fs::read_to_string(&path) {

@@ -16,6 +16,7 @@ pub fn simple_apps(conf: Info<Config>, third_apps: Info<AppList>) -> InfoSync<Ap
                 .unwrap_or_default()
                 .iter()
                 .filter(|app| {
+                    let app = &app.trim().to_string();
                     !(conf.white_list.contains(app) || conf.msg_list.contains(app))
                         || conf.force_list.contains(app)
                 })
@@ -34,7 +35,10 @@ pub fn msg_apps(conf: Info<Config>, third_apps: Info<AppList>) -> InfoSync<AppLi
                 .try_get()
                 .unwrap_or_default()
                 .iter()
-                .filter(|app| conf.msg_list.contains(app))
+                .filter(|app| {
+                    let app = &app.trim().to_string();
+                    conf.msg_list.contains(app)
+                })
                 .map(|s| s.to_string())
                 .collect::<HashSet<String>>()
         },

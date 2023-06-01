@@ -4,12 +4,12 @@ mod killer;
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use group::AppProcessGroup;
+use killer::*;
+
 use parking_lot::RwLock;
 use rayon::prelude::*;
 use tokio::time::{sleep, Duration};
-
-use group::AppProcessGroup;
-use killer::*;
 
 pub struct NapGroup {
     group: Arc<RwLock<AppProcessGroup>>,
@@ -23,7 +23,9 @@ async fn awake_for_dur(
     sleep(nap_time).await;
     group.read().awake();
     sleep(awaken_time).await;
-    group.read().nap();
+    if let Some(group) = group.try_read() {
+        group.nap();
+    }
 }
 
 async fn retian_alive(group: Arc<RwLock<AppProcessGroup>>) {
@@ -60,10 +62,18 @@ impl NapGroup {
 
     #[inline(always)]
     pub fn put_them_nap(&self, other: HashSet<u32>) {
-        self.group.write().processes.extend(other)
+        if other.is_empty() {
+            return;
+        }
+        if let Some(mut group) = self.group.try_write() {
+            group.processes.extend(other);
+        }
     }
 
     pub fn wake_them_up(&self, remove: HashSet<u32>) {
+        if remove.is_empty() {
+            return;
+        }
         self.group.write().processes.retain(|process| {
             if remove.contains(process) {
                 killer(*process, Signal::Continue);

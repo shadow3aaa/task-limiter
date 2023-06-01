@@ -1,8 +1,8 @@
+use std::collections::HashSet;
+
 use crate::misc::exec_cmd;
 
 use rayon::prelude::*;
-
-use std::collections::HashSet;
 
 pub fn get_third_party_apps() -> HashSet<String> {
     let apps = exec_cmd("pm", &["list", "packages", "-3"]).expect("Failed to get list of apps");

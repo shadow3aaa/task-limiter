@@ -1,9 +1,11 @@
 use std::collections::HashSet;
+use std::process::exit;
 use std::sync::Arc;
 
-use rayon::prelude::*;
-
 use crate::misc::exec_cmd;
+
+use log::{debug, error};
+use rayon::prelude::*;
 
 pub struct LruDumper {
     original_dump: String,
@@ -14,11 +16,24 @@ unsafe impl Sync for LruDumper {}
 
 impl LruDumper {
     pub async fn dump() -> Self {
-        let lru = exec_cmd("dumpsys", &["activity", "lru"]).expect("Failed to get the lru list");
+        let lru = match exec_cmd("dumpsys", &["activity", "lru"]) {
+            Ok(o) => {
+                debug!("Successfully called dumpsys activity lru");
+                o
+            }
+            Err(_) => {
+                error!("Fail to dumpsys activity lru");
+                exit(1);
+            }
+        };
         Self { original_dump: lru }
     }
 
     pub fn need_nap_in(&self, list: &HashSet<String>) -> HashSet<u32> {
+        if list.is_empty() {
+            debug!("Nothing add to nap list");
+            return HashSet::new();
+        }
         self.original_dump
             .par_lines()
             .filter_map(|lru| {
@@ -39,12 +54,17 @@ impl LruDumper {
                 if !list.contains(pkg) {
                     return None;
                 }
+                debug!("Add {}:{} to nap list", &pkg, &pid);
                 Some(pid)
             })
             .collect::<HashSet<u32>>()
     }
 
     pub fn need_awake_in(&self, list: &HashSet<String>) -> HashSet<u32> {
+        if list.is_empty() {
+            debug!("Nothing to wake up");
+            return HashSet::new();
+        }
         self.original_dump
             .par_lines()
             .filter_map(|lru| {
@@ -65,6 +85,7 @@ impl LruDumper {
                 if !list.contains(pkg) {
                     return None;
                 }
+                debug!("Wake {}:{} up", &pkg, &pid);
                 Some(pid)
             })
             .collect::<HashSet<u32>>()

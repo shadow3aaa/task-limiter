@@ -15,4 +15,4 @@ wait_until_login
 sleep 30s
 
 chmod a+x "$MODDIR/task_limiter"
-nohup "$MODDIR/task_limiter" "$config_dir/config.toml" >"$config_dir/Output" 2>&1 &
+nohup "$MODDIR/task_limiter" "$config_dir/config.toml" >"$config_dir/limter_log.txt" 2>&1 &

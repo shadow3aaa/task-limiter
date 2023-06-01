@@ -1,8 +1,9 @@
-use inotify::{Inotify, WatchMask};
 use std::error::Error;
 use std::fs;
 use std::thread::sleep;
 use std::time::Duration;
+
+use inotify::{Inotify, WatchMask};
 
 pub fn inotify_block<T: IntoIterator>(path: T) -> Result<(), Box<dyn Error>>
 where
