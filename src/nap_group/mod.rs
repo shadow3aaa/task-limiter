@@ -1,7 +1,7 @@
 mod group;
 mod killer;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use group::AppProcessGroup;
@@ -25,9 +25,7 @@ async fn awake_for_dur(
     sleep(nap_time).await;
     group.read().awake();
     sleep(awaken_time).await;
-    if let Some(group) = group.try_read() {
-        group.nap();
-    }
+    group.read().nap();
 }
 
 async fn retian_alive(group: Arc<RwLock<AppProcessGroup>>) {
@@ -38,6 +36,7 @@ async fn retian_alive(group: Arc<RwLock<AppProcessGroup>>) {
             .par_iter()
             .filter(|(pid, app)| {
                 if !promised_app_killer(**pid, app, Signal::Alive) {
+                    // 这意味着pid要么死了，要么cmdline不再是一个App
                     killer(**pid, Signal::Continue);
                     false
                 } else {
@@ -74,17 +73,26 @@ impl NapGroup {
         if other.is_empty() {
             return;
         }
-        if let Some(mut group) = self.group.try_write() {
-            group.processes.extend(other);
-        }
+        self.group.write().processes.extend(other);
     }
 
     pub fn wake_them_up(&self, remove: PidApp) {
         if remove.is_empty() {
             return;
         }
-        self.group.write().processes.retain(|pid, _| {
+        let mut apps_to_wake: HashSet<String> = HashSet::new();
+        self.group.write().processes.retain(|pid, app| {
             if remove.contains_key(pid) {
+                killer(*pid, Signal::Continue);
+                apps_to_wake.insert(app.to_string());
+                false
+            } else {
+                true
+            }
+        });
+        // re-clear
+        self.group.write().processes.retain(|pid, app| {
+            if apps_to_wake.contains(app) {
                 killer(*pid, Signal::Continue);
                 false
             } else {

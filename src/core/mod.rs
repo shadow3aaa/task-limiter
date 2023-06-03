@@ -16,11 +16,11 @@ use log::{debug, error, info};
 use tokio::time::sleep;
 
 // Todo: 可配置(目前无必要)
-const SLEEP_TIME: Duration = Duration::from_millis(220);
+const SLEEP_TIME: Duration = Duration::from_millis(200);
 const SIMP_NAP_TIME: Duration = Duration::from_secs(1);
-const SIMP_AWAKE_TIME: Duration = Duration::from_millis(5);
+const SIMP_AWAKE_TIME: Duration = Duration::from_millis(1);
 const MSG_NAP_TIME: Duration = Duration::from_secs(1);
-const MSG_AWAKE_TIME: Duration = Duration::from_millis(10);
+const MSG_AWAKE_TIME: Duration = Duration::from_millis(5);
 
 pub async fn process(conf: Arc<InfoSync<Config>>) {
     // 非堵塞的自动更新信息
@@ -95,11 +95,10 @@ pub async fn process(conf: Arc<InfoSync<Config>>) {
             }),
             tokio::spawn({
                 let msg_group = msg_group.clone();
-                async move { msg_group.put_them_nap(msg_nap) }
-            }),
-            tokio::spawn({
-                let msg_group = msg_group.clone();
-                async move { msg_group.wake_them_up(msg_wake) }
+                async move {
+                    msg_group.put_them_nap(msg_nap);
+                    msg_group.wake_them_up(msg_wake);
+                }
             }),
         ) {
             error!("Run-time error:");
